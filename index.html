@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emulador Flash - Menú Pro</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0b0b0b;
+            background-size: cover;
+            background-position: center;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            transition: background-image 0.5s ease;
+        }
+        .contenedor-catalogo {
+            flex: 2;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .tarjeta-juego {
+            position: absolute;
+            width: 180px;
+            height: 260px;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: grab;
+            transition: box-shadow 0.3s ease;
+            background-color: #1a1a1a;
+            user-select: none;
+            will-change: left, top;
+        }
+        .tarjeta-juego:active {
+            cursor: grabbing;
+        }
+        .tarjeta-juego img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+
+        /* --- JUEGO SELECCIONADO: Se hace más grande y destaca --- */
+        .tarjeta-juego.seleccionado {
+            transform: scale(1.12);
+            z-index: 50;
+        }
+
+              
+        /* 1. Carrusel Flotante */
+        .anim-carrusel .tarjeta-juego { animation: flotarCarrusel 4s ease-in-out infinite alternate; }
+        @keyframes flotarCarrusel { 0% { transform: translateY(0px); } 100% { transform: translateY(-14px); } }
+        .anim-carrusel .tarjeta-juego.seleccionado { animation: flotarSelCarrusel 4s ease-in-out infinite alternate; }
+        @keyframes flotarSelCarrusel { 0% { transform: translateY(0px) scale(1.12); } 100% { transform: translateY(-14px) scale(1.12); } }
+
+        /* 2. Efecto Respiración */
+        .anim-respiracion .tarjeta-juego { animation: respirarTarjeta 3s ease-in-out infinite alternate; }
+        @keyframes respirarTarjeta { 0% { transform: scale(1); } 100% { transform: scale(1.06); } }
+        .anim-respiracion .tarjeta-juego.seleccionado { animation: respirarSelTarjeta 3s ease-in-out infinite alternate; }
+        @keyframes respirarSelTarjeta { 0% { transform: scale(1.12); } 100% { transform: scale(1.18); } }
+
+        /* 3. Péndulo Épico */
+        .anim-pendulo .tarjeta-juego { animation: penduloEpico 5s ease-in-out infinite alternate; transform-origin: top center; }
+        @keyframes penduloEpico { 0% { transform: rotate(-4deg); } 100% { transform: rotate(4deg); } }
+        .anim-pendulo .tarjeta-juego.seleccionado { animation: penduloSelEpico 5s ease-in-out infinite alternate; transform-origin: top center; }
+        @keyframes penduloSelEpico { 0% { transform: rotate(-4deg) scale(1.12); } 100% { transform: rotate(4deg) scale(1.12); } }
+
+        /* 4. Brillo Neón Épico */
+        .anim-brillo .tarjeta-juego { animation: brilloNeoni 2.2s ease-in-out infinite alternate; }
+        @keyframes brilloNeoni { 0% { filter: brightness(1); } 100% { filter: brightness(1.35) drop-shadow(0 0 15px rgba(255,255,255,0.6)); } }
+        .anim-brillo .tarjeta-juego.seleccionado { animation: brilloSelNeoni 2.2s ease-in-out infinite alternate; }
+        @keyframes brilloSelNeoni { 0% { filter: brightness(1.1); transform: scale(1.12); } 100% { filter: brightness(1.45) drop-shadow(0 0 22px rgba(255,255,255,0.8)); transform: scale(1.12); } }
+
+        /* 5. Vaivén Horizontal */
+        .anim-vaiven .tarjeta-juego { animation: vaivenLateral 4s ease-in-out infinite alternate; }
+        @keyframes vaivenLateral { 0% { transform: translateX(0px); } 100% { transform: translateX(18px); } }
+        .anim-vaiven .tarjeta-juego.seleccionado { animation: vaivenSelLateral 4s ease-in-out infinite alternate; }
+        @keyframes vaivenSelLateral { 0% { transform: translateX(0px) scale(1.12); } 100% { transform: translateX(18px) scale(1.12); } }
+
+        /* 6. Latido Cardiaco Épico */
+        .anim-latido .tarjeta-juego { animation: latidoEpico 1.5s ease-in-out infinite; }
+        @keyframes latidoEpico { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .anim-latido .tarjeta-juego.seleccionado { animation: latidoSelEpico 1.5s ease-in-out infinite; }
+        @keyframes latidoSelEpico { 0%, 100% { transform: scale(1.12); } 50% { transform: scale(1.18); } }
+
+
+        .panel-info {
+            flex: 1;
+            background-color: rgba(18, 18, 18, 0.9);
+            border-left: 2px solid #222;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 20;
+        }
+        .panel-info h2 { font-size: 30px; color: #ffcc00; margin-bottom: 10px; }
+        .panel-info p { font-size: 16px; margin: 8px 0; color: #ccc; }
+
+        /* Panel Admin Arrastrable */
+        #panel-admin {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #ffcc00;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none;
+            width: 340px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .admin-header {
+            cursor: move;
+            background: #222;
+            padding: 8px;
+            margin: -20px -20px 15px -20px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            color: #ffcc00;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #panel-admin label { font-size: 12px; display: block; margin-top: 8px; color: #aaa; }
+        #panel-admin input[type="text"], #panel-admin textarea, #panel-admin select { width: 100%; background: #222; border: 1px solid #444; color: #fff; padding: 6px; border-radius: 4px; margin-top: 4px; box-sizing: border-box; font-size: 13px; }
+        #panel-admin input[type="color"] { width: 100%; height: 35px; cursor: pointer; padding: 2px; background: #222; border: 1px solid #444; }
+        #panel-admin input[type="file"] { font-size: 11px; margin-top: 4px; color: #aaa; }
+        #panel-admin input[type="checkbox"] { cursor: pointer; margin-right: 5px; }
+        #panel-admin button { background: #ffcc00; color: #000; border: none; padding: 8px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%; }
+        #panel-admin button:hover { background: #e6b800; }
+        .btn-nuevo { background: #33bb44 !important; color: #fff !important; }
+        .btn-nuevo:hover { background: #2a9d38 !important; }
+        .btn-cerrar { background: #cc3333 !important; color: #fff !important; margin-top: 5px !important; }
+        .seccion-admin { border-top: 1px dashed #444; margin-top: 15px; padding-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <audio id="musica-fondo"></audio>
+
+    <div class="contenedor-catalogo" id="catalogo"></div>
+
+    <div class="panel-info">
+        <h2 id="info-nombre">Cargando...</h2>
+        <p><strong>Año:</strong> <span id="info-anio">-</span></p>
+        <p><strong>Jugadores:</strong> <span id="info-jugadores">-</span></p>
+        <p><strong>Descripción:</strong> <span id="info-descripcion">-</span></p>
+    </div>
+
+    <div id="panel-admin">
+        <div class="admin-header" id="admin-header">
+            <span>🖱️ Panel Admin (Arrastrable)</span>
+            <span style="cursor:pointer;" onclick="cerrarAdmin()">✕</span>
+        </div>
+
+        <h3>✏️ Editar Juego Actual</h3>
+        <label>Nombre:</label>
+        <input type="text" id="admin-nombre" oninput="guardarCambiosEnVivo()">
+        <label>Año:</label>
+        <input type="text" id="admin-anio" oninput="guardarCambiosEnVivo()">
+        <label>Jugadores:</label>
+        <input type="text" id="admin-jugadores" oninput="guardarCambiosEnVivo()">
+        <label>Descripción:</label>
+        <textarea id="admin-desc" rows="2" oninput="guardarCambiosEnVivo()"></textarea>
+        <label>Archivo .swf:</label>
+        <input type="text" id="admin-archivo" oninput="guardarCambiosEnVivo()">
+        
+        <label>🎨 Color del Borde Brillante:</label>
+        <input type="color" id="admin-color-borde" oninput="guardarCambiosEnVivo()">
+
+        <label>Cambiar Portada:</label>
+        <input type="file" accept="image/*" onchange="cambiarPortada(event)">
+        <label>Posición X:</label>
+        <input type="text" id="admin-x" oninput="guardarCambiosEnVivo()">
+        <label>Posición Y:</label>
+        <input type="text" id="admin-y" oninput="guardarCambiosEnVivo()">
+        
+        <div class="seccion-admin">
+            <h3>➕ Agregar Nuevo Juego</h3>
+            <label>Nombre del nuevo juego:</label>
+            <input type="text" id="nuevo-nombre" placeholder="Ej: Mario Bros">
+            <label>Ruta archivo .swf:</label>
+            <input type="text" id="nuevo-archivo" placeholder="juegos/mario.swf">
+            <label>Portada del nuevo juego:</label>
+            <input type="file" id="nuevo-portada-file" accept="image/*">
+            <button class="btn-nuevo" onclick="agregarJuegoNuevo()">Añadir al Menú</button>
+        </div>
+
+        <div class="seccion-admin">
+            <h3>✨ Auto-Acomodo Inicial (Opcional)</h3>
+            <label>Plantilla rápida:</label>
+            <select id="admin-auto" onchange="aplicarAutoAcomodo()">
+                <option value="">-- No mover (Mis posiciones manuales) --</option>
+                <option value="fila">Fila Horizontal</option>
+                <option value="cuadricula">Cuadrícula</option>
+                <option value="carrusel">Carrusel Estándar</option>
+            </select>
+        </div>
+
+        <div class="seccion-admin">
+            <h3>🌟 Animaciones Épicas (En tus posiciones)</h3>
+            <label>Efecto visual general:</label>
+            <select id="admin-animacion" onchange="guardarCambiosEnVivo()">
+                <option value="ninguna">Sin animación (Estáticas con brillo)</option>
+                <option value="carrusel">Carrusel Flotante</option>
+                <option value="respiracion">Efecto Respiración / Pulso</option>
+                <option value="pendulo">Péndulo Épico (Inclinación)</option>
+                <option value="brillo">Brillo Neón Dinámico</option>
+                <option value="vaiven">Vaivén Horizontal Suave</option>
+                <option value="latido">Latido Cardiaco Épico</option>
+            </select>
+            <p style="font-size: 11px; color: #888; margin-top: 5px;">*Todas las animaciones ocurren exactamente en las coordenadas donde dejes cada carátula.</p>
+        </div>
+
+        <div class="seccion-admin">
+            <h3>🌐 Configuración Global</h3>
+            <label>Imagen de Fondo General:</label>
+            <input type="file" accept="image/*" onchange="cambiarFondoGeneral(event)">
+            
+            <label>Ruta de Música:</label>
+            <input type="text" id="admin-musica" placeholder="audio/cancion.mp3" oninput="guardarCambiosEnVivo()">
+            
+            <label style="margin-top: 10px;">
+                <input type="checkbox" id="admin-loop" onchange="guardarCambiosEnVivo()"> Activar Loop de Música
+            </label>
+        </div>
+        
+        <button onclick="guardarPermanente()">💾 Guardar y Descargar</button>
+        <button class="btn-cerrar" onclick="cerrarAdmin()">Cerrar Panel</button>
+    </div>
+
+    <script src="juegos.js"></script>
+    <script>
+        let datosJuegos = window.datosMenu || {};
+        const datosGuardados = localStorage.getItem('arcade_datos_menu');
+        if (datosGuardados) {
+            try { datosJuegos = JSON.parse(datosGuardados); } catch(e) {}
+        }
+
+        let indiceSeleccionado = 0;
+
+        function inicializarAudio() {
+            const audio = document.getElementById('musica-fondo');
+            if (datosJuegos.musicaMenu) {
+                audio.src = datosJuegos.musicaMenu;
+                audio.loop = datosJuegos.loopMusica !== undefined ? datosJuegos.loopMusica : true;
+                audio.volume = 0.5;
+                document.body.addEventListener('click', () => { audio.play().catch(e => {}); }, { once: true });
+            }
+        }
+        inicializarAudio();
+
+        if (datosJuegos.fondoMenu) {
+            document.body.style.backgroundImage = `url('${datosJuegos.fondoMenu}')`;
+        }
+
+        function aplicarAutoAcomodo() {
+            let modo = document.getElementById('admin-auto').value;
+            if (!modo) return;
+
+            let total = datosJuegos.juegos.length;
+            datosJuegos.juegos.forEach((juego, i) => {
+                if (!juego.posicion) juego.posicion = {};
+                let x = 10, y = 30;
+
+                if (modo === 'fila') {
+                    let espacio = 75 / (total || 1);
+                    x = 10 + (i * espacio);
+                    y = 35;
+                } else if (modo === 'cuadricula') {
+                    let col = i % 4;
+                    let fila = Math.floor(i / 4);
+                    x = 10 + (col * 22);
+                    y = 15 + (fila * 45);
+                } else if (modo === 'carrusel') {
+                    let espacio = 70 / (total || 1);
+                    x = 15 + (i * espacio);
+                    y = 35;
+                }
+
+                juego.posicion.x = x.toFixed(1) + '%';
+                juego.posicion.y = y.toFixed(1) + '%';
+            });
+
+            localStorage.setItem('arcade_datos_menu', JSON.stringify(datosJuegos));
+            renderizarCatalogo();
+            seleccionarJuego(indiceSeleccionado);
+            document.getElementById('admin-auto').value = "";
+        }
+
+        function renderizarCatalogo() {
+            const catalogoDiv = document.getElementById('catalogo');
+            catalogoDiv.className = 'contenedor-catalogo';
+            catalogoDiv.innerHTML = '';
+
+            if (!datosJuegos.juegos || datosJuegos.juegos.length === 0) return;
+
+            let anim = datosJuegos.animacionMenu || 'ninguna';
+            if (anim !== 'ninguna') {
+                catalogoDiv.classList.add('anim-' + anim);
+            }
+
+            datosJuegos.juegos.forEach((juego, index) => {
+                const tarjeta = document.createElement('div');
+                let colorBorde = juego.colorBorde || '#ffcc00';
+                let esSeleccionado = (index === indiceSeleccionado);
+
+                tarjeta.className = `tarjeta-juego ${esSeleccionado ? 'seleccionado' : ''}`;
+                
+                // Se acoplan exactamente al lugar donde las dejas arrastrándolas
+                tarjeta.style.left = juego.posicion ? juego.posicion.x : '10%';
+                tarjeta.style.top = juego.posicion ? juego.posicion.y : '30%';
+
+                tarjeta.style.border = `3px solid ${colorBorde}`;
+                
+                // Brillo dinámico: Más intenso en la seleccionada
+                if (esSeleccionado) {
+                    tarjeta.style.boxShadow = `0 0 35px ${colorBorde}, inset 0 0 15px ${colorBorde}`;
+                } else {
+                    tarjeta.style.boxShadow = `0 0 12px ${colorBorde}66`;
+                }
+
+                tarjeta.innerHTML = `<img src="${juego.portada}" alt="${juego.nombre}">`;
+                
+                let estaArrastrandoJuego = false;
+                let startX = 0, startY = 0;
+                let initialLeft = 0, initialTop = 0;
+
+                tarjeta.addEventListener('mousedown', (e) => {
+                    if (document.getElementById('panel-admin').style.display === 'block') {
+                        estaArrastrandoJuego = true;
+                        if (index !== indiceSeleccionado) {
+                            seleccionarJuego(index);
+                        }
+
+                        startX = e.clientX;
+                        startY = e.clientY;
+
+                        const rect = catalogoDiv.getBoundingClientRect();
+                        const tarjetaRect = tarjeta.getBoundingClientRect();
+
+                        initialLeft = tarjetaRect.left - rect.left;
+                        initialTop = tarjetaRect.top - rect.top;
+
+                        e.stopPropagation();
+                        e.preventDefault();
+                    }
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!estaArrastrandoJuego) return;
+
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+
+                    let nuevoX = initialLeft + dx;
+                    let nuevoY = initialTop + dy;
+
+                    tarjeta.style.left = nuevoX + 'px';
+                    tarjeta.style.top = nuevoY + 'px';
+                });
+
+                window.addEventListener('mouseup', (e) => {
+                    if (!estaArrastrandoJuego) return;
+                    estaArrastrandoJuego = false;
+
+                    const rect = catalogoDiv.getBoundingClientRect();
+                    const tarjetaRect = tarjeta.getBoundingClientRect();
+
+                    let finalX = tarjetaRect.left - rect.left;
+                    let finalY = tarjetaRect.top - rect.top;
+
+                    let porcX = (finalX / rect.width) * 100;
+                    let porcY = (finalY / rect.height) * 100;
+
+                    juego.posicion = { x: porcX.toFixed(1) + '%', y: porcY.toFixed(1) + '%' };
+                    
+                    document.getElementById('admin-x').value = juego.posicion.x;
+                    document.getElementById('admin-y').value = juego.posicion.y;
+
+                    localStorage.setItem('arcade_datos_menu', JSON.stringify(datosJuegos));
+                });
+
+                tarjeta.onclick = () => {
+                    if (document.getElementById('panel-admin').style.display !== 'block') {
+                        if (index === indiceSeleccionado) {
+                            window.location.href = `index.html?juego=${encodeURIComponent(juego.archivo)}`;
+                        } else {
+                            seleccionarJuego(index);
+                        }
+                    }
+                };
+
+                catalogoDiv.appendChild(tarjeta);
+            });
+        }
+
+        function seleccionarJuego(index) {
+            indiceSeleccionado = index;
+            const juego = datosJuegos.juegos[index];
+            if (!juego) return;
+
+            document.getElementById('info-nombre').innerText = juego.nombre || '';
+            document.getElementById('info-anio').innerText = juego.anio || '';
+            document.getElementById('info-jugadores').innerText = juego.jugadores || '';
+            document.getElementById('info-descripcion').innerText = juego.descripcion || '';
+
+            document.getElementById('admin-nombre').value = juego.nombre || '';
+            document.getElementById('admin-anio').value = juego.anio || '';
+            document.getElementById('admin-jugadores').value = juego.jugadores || '';
+            document.getElementById('admin-desc').value = juego.descripcion || '';
+            document.getElementById('admin-archivo').value = juego.archivo || '';
+            document.getElementById('admin-color-borde').value = juego.colorBorde || '#ffcc00';
+            document.getElementById('admin-x').value = juego.posicion ? juego.posicion.x : '10%';
+            document.getElementById('admin-y').value = juego.posicion ? juego.posicion.y : '30%';
+
+            document.getElementById('admin-musica').value = datosJuegos.musicaMenu || '';
+            document.getElementById('admin-loop').checked = datosJuegos.loopMusica !== undefined ? datosJuegos.loopMusica : true;
+            document.getElementById('admin-animacion').value = datosJuegos.animacionMenu || 'ninguna';
+
+            renderizarCatalogo();
+        }
+
+        // Atajo secreto: Shift + Alt + A (Contraseña: 1234)
+        window.addEventListener('keydown', (e) => {
+            if (e.shiftKey && e.altKey && e.code === 'KeyA') {
+                e.preventDefault();
+                let pass = prompt("Introduce la contraseña de Administrador:");
+                
+                if (pass === "1234") {
+                    document.getElementById('panel-admin').style.display = 'block';
+                    alert("¡Acceso concedido!");
+                } else if (pass !== null) {
+                    alert("Contraseña incorrecta.");
+                }
+            }
+        });
+
+        function cerrarAdmin() {
+            document.getElementById('panel-admin').style.display = 'none';
+        }
+
+        function guardarCambiosEnVivo() {
+            if (datosJuegos.juegos && datosJuegos.juegos[indiceSeleccionado]) {
+                const juego = datosJuegos.juegos[indiceSeleccionado];
+                juego.nombre = document.getElementById('admin-nombre').value;
+                juego.anio = document.getElementById('admin-anio').value;
+                juego.jugadores = document.getElementById('admin-jugadores').value;
+                juego.descripcion = document.getElementById('admin-desc').value;
+                juego.archivo = document.getElementById('admin-archivo').value;
+                juego.colorBorde = document.getElementById('admin-color-borde').value;
+                
+                if (!juego.posicion) juego.posicion = {};
+                juego.posicion.x = document.getElementById('admin-x').value;
+                juego.posicion.y = document.getElementById('admin-y').value;
+
+                document.getElementById('info-nombre').innerText = juego.nombre;
+                document.getElementById('info-anio').innerText = juego.anio;
+                document.getElementById('info-jugadores').innerText = juego.jugadores;
+                document.getElementById('info-descripcion').innerText = juego.descripcion;
+            }
+
+            datosJuegos.musicaMenu = document.getElementById('admin-musica').value;
+            datosJuegos.loopMusica = document.getElementById('admin-loop').checked;
+            datosJuegos.animacionMenu = document.getElementById('admin-animacion').value;
+
+            const audio = document.getElementById('musica-fondo');
+            if (audio.src !== datosJuegos.musicaMenu && datosJuegos.musicaMenu) {
+                audio.src = datosJuegos.musicaMenu;
+            }
+            audio.loop = datosJuegos.loopMusica;
+
+            localStorage.setItem('arcade_datos_menu', JSON.stringify(datosJuegos));
+            renderizarCatalogo();
+        }
+
+        function cambiarFondoGeneral(event) {
+            const archivo = event.target.files[0];
+            if (archivo) {
+                const lector = new FileReader();
+                lector.onload = function(e) {
+                    datosJuegos.fondoMenu = e.target.result;
+                    document.body.style.backgroundImage = `url('${datosJuegos.fondoMenu}')`;
+                    localStorage.setItem('arcade_datos_menu', JSON.stringify(datosJuegos));
+                    alert("¡Fondo general actualizado con éxito!");
+                }
+                lector.readAsDataURL(archivo);
+            }
+        }
+
+        function cambiarPortada(event) {
+            const archivo = event.target.files[0];
+            if (archivo) {
+                const lector = new FileReader();
+                lector.onload = function(e) {
+                    datosJuegos.juegos[indiceSeleccionado].portada = e.target.result;
+                    localStorage.setItem('arcade_datos_menu', JSON.stringify(datosJuegos));
+                    renderizarCatalogo();
+                }
+                lector.readAsDataURL(archivo);
+            }
+        }
+
+        function agregarJuegoNuevo() {
+            const nombre = document.getElementById('nuevo-nombre').value;
+            const archivo = document.getElementById('nuevo-archivo').value;
+            const fileInput = document.getElementById('nuevo-portada-file');
+
+            if (!nombre || !archivo) {
+                alert("Por favor ingresa al menos el nombre y la ruta del archivo .swf");
+                return;
+            }
+
+            const archivoImg = fileInput.files[0];
+            if (archivoImg) {
+                const lector = new FileReader();
+                lector.onload = function(e) {
+                    insertarJuegoEnLista(nombre, archivo, e.target.result);
+                }
+                lector.readAsDataURL(archivoImg);
+            } else {
+                insertarJuegoEnLista(nombre, archivo, "SuperFighter.png");
+            }
+        }
+
+        function insertarJuegoEnLista(nombre, archivo, portadaUrl) {
+            const nuevoJuego = {
+                id: nombre.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+                nombre: nombre,
+                anio: "2026",
+                jugadores: "1 Player",
+                descripcion: "Nuevo juego agregado.",
+                archivo: archivo,
+                portada: portadaUrl,
+                colorBorde: "#00ffcc",
+                posicion: { x: "50%", y: "30%" }
+            };
+
+            if (!datosJuegos.juegos) datosJuegos.juegos = [];
+            datosJuegos.juegos.push(nuevoJuego);
+            localStorage.setItem('arcade_datos_menu', JSON.stringify(datosJuegos));
+            
+            document.getElementById('nuevo-nombre').value = '';
+            document.getElementById('nuevo-archivo').value = '';
+            document.getElementById('nuevo-portada-file').value = '';
+
+            renderizarCatalogo();
+            seleccionarJuego(datosJuegos.juegos.length - 1);
+            alert("¡Juego agregado con éxito!");
+        }
+
+        function guardarPermanente() {
+            localStorage.setItem('arcade_datos_menu', JSON.stringify(datosJuegos));
+            
+            let contenido = "const datosMenu = " + JSON.stringify(datosJuegos, null, 4) + ";";
+            let blob = new Blob([contenido], { type: "text/javascript;charset=utf-8" });
+            let enlace = document.createElement("a");
+            enlace.href = URL.createObjectURL(blob);
+            enlace.download = "juegos.js";
+            enlace.click();
+            alert("¡Guardado con éxito! Reemplaza tu archivo juegos.js.");
+        }
+
+        const panel = document.getElementById('panel-admin');
+        const header = document.getElementById('admin-header');
+        let esArrastrandoPanel = false, offX = 0, offY = 0;
+
+        header.addEventListener('mousedown', (e) => {
+            esArrastrandoPanel = true;
+            offX = e.clientX - panel.offsetLeft;
+            offY = e.clientY - panel.offsetTop;
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!esArrastrandoPanel) return;
+            panel.style.left = (e.clientX - offX) + 'px';
+            panel.style.top = (e.clientY - offY) + 'px';
+            panel.style.position = 'fixed';
+        });
+
+        window.addEventListener('mouseup', () => {
+            esArrastrandoPanel = false;
+        });
+
+        if (datosJuegos && datosJuegos.juegos && datosJuegos.juegos.length > 0) {
+            renderizarCatalogo();
+            seleccionarJuego(0);
+        }
+    </script>
+</body>
+</html>
