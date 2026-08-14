@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emulador Flash</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            overflow: hidden;
+        }
+        #player-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        ruffle-player {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="player-container"></div>
+
+    <!-- Cargamos Ruffle directamente desde el CDN oficial para evitar errores de rutas locales -->
+    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const archivoJuego = urlParams.get('juego');
+
+            if (archivoJuego) {
+                const ruffle = window.RufflePlayer.newest();
+                const player = ruffle.createPlayer();
+                
+                const container = document.getElementById('player-container');
+                container.appendChild(player);
+
+                // Carga el archivo .swf solicitado desde el servidor local de Unity
+                player.load(archivoJuego);
+            } else {
+                console.warn("No se especificó ningún juego en la URL.");
+            }
+        });
+    </script>
+</body>
+</html>
